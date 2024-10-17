@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 from typing import Union
-
+import shutil
 import black
 import click
 import httpx
@@ -10,7 +10,7 @@ import orjson
 from black import NothingChanged
 from httpx import ConnectError
 from httpx import ConnectTimeout
-from openapi_schema_pydantic import OpenAPI
+from openapi_pydantic import OpenAPI
 from pydantic import ValidationError
 
 from .common import HTTPLibrary
@@ -20,6 +20,12 @@ from .language_converters.python.jinja_config import SERVICE_TEMPLATE
 from .language_converters.python.jinja_config import create_jinja_env
 from .models import ConversionResult
 
+
+def create_clean_directory(path: Path):
+    """Remove the directory if it exists and create a fresh one."""
+    if path.exists():
+        shutil.rmtree(path)  # Remove the existing directory and its contents
+    path.mkdir(parents=True, exist_ok=True)  # Recreate the directory
 
 def write_code(path: Path, content) -> None:
     """
@@ -92,6 +98,15 @@ def write_data(data: ConversionResult, output: Union[str, Path]) -> None:
     # Create the services module.
     services_path = Path(output) / "services"
     services_path.mkdir(parents=True, exist_ok=True)
+    create_clean_directory(Path(models_path))
+
+    # Create the services module.
+    services_path = Path(output) / "services"
+    create_clean_directory(Path(services_path))
+    
+    # Create the enums.
+    enums_path = Path(output) / "enums"
+    create_clean_directory(Path(enums_path))
 
     files = []
 
@@ -116,14 +131,34 @@ def write_data(data: ConversionResult, output: Union[str, Path]) -> None:
         files.append(service.file_name)
         write_code(
             services_path / f"{service.file_name}.py",
-            jinja_env.get_template(SERVICE_TEMPLATE).render(**service.dict()),
+            jinja_env.get_template(SERVICE_TEMPLATE).render(**service.model_dump()),
         )
+    
+    files = []
+
+    for enum in data.enum_files:
+        files.append(enum.file_name)
+        write_code(
+            enums_path / f"{enum.file_name}.py",
+            enum.content,
+        )
+    
+    write_code(
+        enums_path / "__init__.py",
+        "\n".join([f"from .{file} import *" for file in files]),
+    )
 
     # Create services.__init__.py file containing imports to all services.
     write_code(services_path / "__init__.py", "")
 
     # Write the api_config.py file.
     write_code(Path(output) / "api_config.py", data.api_config.content)
+
+    # Write the sdk.py file.
+    write_code(Path(output) / "sdk.py", data.sdk.content)
+
+    # Write the rest_client.py file.
+    write_code(Path(output) / "rest_client.py", data.rest_client.content)
 
     # Write the __init__.py file.
     write_code(
@@ -138,6 +173,8 @@ def generate_data(
     library: Optional[HTTPLibrary] = HTTPLibrary.httpx,
     env_token_name: Optional[str] = None,
     use_orjson: bool = False,
+    use_class: bool = False,
+    enum_path: Optional[tuple[str]] = None,
     custom_template_path: Optional[str] = None,
 ) -> None:
     """
@@ -151,6 +188,8 @@ def generate_data(
         library_config_dict[library],
         env_token_name,
         use_orjson,
+        use_class,
+        enum_path,
         custom_template_path,
     )
 

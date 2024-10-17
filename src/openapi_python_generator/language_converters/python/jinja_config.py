@@ -13,6 +13,8 @@ SERVICE_TEMPLATE = "service.jinja2"
 HTTPX_TEMPLATE = "httpx.jinja2"
 API_CONFIG_TEMPLATE = "apiconfig.jinja2"
 TEMPLATE_PATH = Path(__file__).parent / "templates"
+SDK_TEMPLATE = "sdk.jinja2"
+REST_CLIENT_TEMPLATE = "rest_client.jinja2" 
 
 
 def create_jinja_env():

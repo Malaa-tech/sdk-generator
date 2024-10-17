@@ -3,8 +3,8 @@ from typing import Optional
 import click
 
 from openapi_python_generator import __version__
-from openapi_python_generator.common import HTTPLibrary
-from openapi_python_generator.generate_data import generate_data
+from openapi_python_generator.common import HTTPLibrary, library_config_dict
+from openapi_python_generator.generate_data import generate_data, get_open_api, generator, write_data
 
 
 @click.command()
@@ -25,12 +25,25 @@ from openapi_python_generator.generate_data import generate_data
     "variable to be set and will raise an error if it is not.",
 )
 @click.option(
+    "--use-class",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Use the service class generator when creating apis for each controller",
+)
+@click.option(
     "--use-orjson",
     is_flag=True,
     show_default=True,
     default=False,
     help="Use the orjson library to serialize the data. This is faster than the default json library and provides "
     "serialization of datetimes and other types that are not supported by the default json library.",
+)
+@click.option(
+    "--enum-path",
+    type=str,
+    multiple=True, 
+    help="path for Custom Enums to use",
 )
 @click.option(
     "--custom-template-path",
@@ -45,6 +58,8 @@ def main(
     library: Optional[HTTPLibrary] = HTTPLibrary.httpx,
     env_token_name: Optional[str] = None,
     use_orjson: bool = False,
+    use_class: bool = False,
+    enum_path: Optional[tuple[str]] = None,
     custom_template_path: Optional[str] = None,
 ) -> None:
     """
@@ -54,7 +69,7 @@ def main(
     an OUTPUT path, where the resulting client is created.
     """
     generate_data(
-        source, output, library, env_token_name, use_orjson, custom_template_path
+        source, output, library, env_token_name, use_orjson, use_class, enum_path, custom_template_path
     )
 
 

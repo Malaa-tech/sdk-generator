@@ -33,6 +33,14 @@ from openapi_python_generator.models import TypeConversion
 
 HTTP_OPERATIONS = ["get", "post", "put", "delete", "options", "head", "patch", "trace"]
 
+class ClassService(Service):
+    class_name: str
+
+def convert_to_camel_case(word: str):
+    # split underscore using split
+    temp = word.split("_")
+    # joining result
+    return temp[0].title() + "".join(ele.title() for ele in temp[1:])
 
 def generate_body_param(operation: Operation) -> Union[str, None]:
     if operation.requestBody is None:
@@ -263,9 +271,9 @@ def generate_return_type(operation: Operation) -> OpReturnType:
         raise Exception("Unknown media type schema type")  # pragma: no cover
 
 
-def generate_services(
+def generate_class_services(
     paths: Dict[str, PathItem], library_config: LibraryConfig
-) -> List[Service]:
+) -> List[ClassService]:
     """
     Generates services from a paths object.
     :param paths: paths object to be converted
@@ -332,9 +340,13 @@ def generate_services(
     tags = set([so.tag for so in service_ops])
 
     for tag in tags:
+        file_name = f"{common.camel_case_split(tag)}_service".replace(
+            " ", "_"
+        ).lower()
         services.append(
-            Service(
-                file_name=f"{tag}_service",
+            ClassService(
+                file_name=file_name,
+                  class_name=convert_to_camel_case(file_name),
                 operations=[
                     so for so in service_ops if so.tag == tag and not so.async_client
                 ],
@@ -352,9 +364,11 @@ def generate_services(
         )
 
     for tag in tags:
+        file_name = f"async_{common.camel_case_split(tag)}_service".replace(" ", "_").lower()
         services.append(
-            Service(
-                file_name=f"async_{tag}_service",
+            ClassService(
+                file_name=file_name,
+                  class_name=convert_to_camel_case(file_name),
                 operations=[
                     so for so in service_ops if so.tag == tag and so.async_client
                 ],

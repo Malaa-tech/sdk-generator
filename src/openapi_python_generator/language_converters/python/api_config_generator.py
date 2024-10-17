@@ -1,6 +1,7 @@
 from typing import Optional
 
-from openapi_schema_pydantic import OpenAPI
+
+from openapi_pydantic import OpenAPI
 
 from openapi_python_generator.language_converters.python.jinja_config import (
     API_CONFIG_TEMPLATE,
@@ -24,4 +25,5 @@ def generate_api_config(
             env_token_name=env_token_name, **data.dict()
         ),
         base_url=data.servers[0].url if len(data.servers) > 0 else "NO SERVER",
-    )
+            env_token_name=env_token_name, **data.model_dump()
+        )
