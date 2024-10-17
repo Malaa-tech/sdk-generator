@@ -40,9 +40,12 @@ def write_code(path: Path, content) -> None:
                 formatted_contend = black.format_file_contents(
                     content, fast=False, mode=black.FileMode(line_length=120)
                 )
-
             except NothingChanged:
                 formatted_contend = content
+            except Exception as e:
+                f.write(content)
+                print(f"Error formatting {path}: {e}")
+                raise e
             formatted_contend = isort.code(formatted_contend, line_length=120)
             f.write(formatted_contend)
     except Exception as e:
@@ -94,16 +97,13 @@ def write_data(data: ConversionResult, output: Union[str, Path]) -> None:
     # Create the models module.
     models_path = Path(output) / "models"
     models_path.mkdir(parents=True, exist_ok=True)
-
-    # Create the services module.
-    services_path = Path(output) / "services"
-    services_path.mkdir(parents=True, exist_ok=True)
     create_clean_directory(Path(models_path))
 
     # Create the services module.
     services_path = Path(output) / "services"
+    services_path.mkdir(parents=True, exist_ok=True)
     create_clean_directory(Path(services_path))
-    
+
     # Create the enums.
     enums_path = Path(output) / "enums"
     create_clean_directory(Path(enums_path))
@@ -149,8 +149,8 @@ def write_data(data: ConversionResult, output: Union[str, Path]) -> None:
     )
 
     # Create services.__init__.py file containing imports to all services.
-    write_code(services_path / "__init__.py", "")
-
+    write_code(services_path / "__init__.py",  "\n".join([f"from .{service.file_name} import *" for service in data.services]),)
+ 
     # Write the api_config.py file.
     write_code(Path(output) / "api_config.py", data.api_config.content)
 

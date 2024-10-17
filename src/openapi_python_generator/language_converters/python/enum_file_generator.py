@@ -17,11 +17,12 @@ def generate_enum_file(
             # extract classes names in the file
             classes = [line.split(" ")[1].split("(")[0] for line in content.split("\n") if "class" in line]
 
-        return EnumFiles(
-            file_name=file_name,
-            content=content,
-            classes=classes
-        
-        )
+            return EnumFiles(
+                file_name=file_name,
+                content=content,
+                classes=classes
+            
+            )
+        return None
     except Exception as e:
         return None
