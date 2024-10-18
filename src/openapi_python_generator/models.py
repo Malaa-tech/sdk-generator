@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Any
 from typing import Optional
 
-from openapi_schema_pydantic import Operation
-from openapi_schema_pydantic import PathItem
-from openapi_schema_pydantic import Schema
+from openapi_pydantic import Operation
+from openapi_pydantic import PathItem
+from openapi_pydantic import Schema
 from pydantic import BaseModel
 
 
@@ -67,15 +67,35 @@ class Service(BaseModel):
     async_client: Optional[bool] = False
     library_import: str
     use_orjson: bool = False
-
-
+    class_name: Optional[str] = None
+  
 class APIConfig(BaseModel):
     file_name: str
     base_url: str
     content: str
 
+class RestClient(BaseModel):
+    file_name: str
+    content: str
+    library_import: str
+    async_client: Optional[bool] = False
+
+class ServiceSDK(BaseModel):
+    file_name: str
+    content: str
+    classes: List[Any] = []
+    enum_classes : List[Any] = []
+
+class EnumFiles(BaseModel):
+    file_name: str
+    content: str
+    classes: List[str] = []
 
 class ConversionResult(BaseModel):
     models: List[Model]
     services: List[Service]
     api_config: APIConfig
+    sdk: Optional[ServiceSDK] = None
+    rest_client: Optional[RestClient] = None
+    enum_files: List[EnumFiles] = []
+

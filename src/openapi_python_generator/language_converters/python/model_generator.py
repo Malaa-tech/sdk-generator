@@ -4,9 +4,9 @@ from typing import List
 from typing import Optional
 
 import click
-from openapi_schema_pydantic import Components
-from openapi_schema_pydantic import Reference
-from openapi_schema_pydantic import Schema
+from openapi_pydantic import Components
+from openapi_pydantic import Reference
+from openapi_pydantic import Schema
 
 from openapi_python_generator.language_converters.python import common
 from openapi_python_generator.language_converters.python.jinja_config import (
@@ -270,10 +270,12 @@ def generate_models(components: Components) -> List[Model]:
     for schema_name, schema_or_reference in components.schemas.items():
         name = common.normalize_symbol(schema_name)
         if schema_or_reference.enum is not None:
-            value_dict = schema_or_reference.dict()
+            value_dict = schema_or_reference.model_dump()
             regex = re.compile(r"[\s\/=\*\+]+")
             value_dict["enum"] = [
-                re.sub(regex, "_", i) if isinstance(i, str) else f"value_{i}"
+                {"key": re.sub(regex, "_", i), "value": i}
+                if isinstance(i, str)
+                else {"key": f"value_{i}", "value": f"value_{i}"}
                 for i in value_dict["enum"]
             ]
             m = Model(
