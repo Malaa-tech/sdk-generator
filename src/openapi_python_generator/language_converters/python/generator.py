@@ -61,13 +61,15 @@ def generator(
     else:
         enum_files = []
 
-    sdk = generate_sdk(data, env_token_name,  
-                       classes=[ {"class_name" :service.class_name , "file_name": service.file_name} for service in services ], 
-                       enum_classes=[ {"class_name" :enum , "method_name": common.camel_case_split(enum)} for enum in enum_classes])
-   
-    rest_client = generate_rest_client(data, library_config) 
-
+    sdk = None
+    rest_client = None
+    if use_class:
+        sdk = generate_sdk(data, env_token_name,  
+                        classes=[ {"class_name" :service.class_name , "file_name": service.file_name} for service in services ], 
+                        enum_classes=[ {"class_name" :enum , "method_name": common.camel_case_split(enum)} for enum in enum_classes])
     
+        rest_client = generate_rest_client(data, library_config) 
+
     return ConversionResult(
         models=models,
         services=services,

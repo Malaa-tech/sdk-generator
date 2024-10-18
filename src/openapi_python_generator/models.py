@@ -95,7 +95,7 @@ class ConversionResult(BaseModel):
     models: List[Model]
     services: List[Service]
     api_config: APIConfig
-    sdk: ServiceSDK
-    rest_client: RestClient
+    sdk: Optional[ServiceSDK] = None
+    rest_client: Optional[RestClient] = None
     enum_files: List[EnumFiles] = []
 

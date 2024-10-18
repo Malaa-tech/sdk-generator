@@ -106,7 +106,8 @@ def write_data(data: ConversionResult, output: Union[str, Path]) -> None:
 
     # Create the enums.
     enums_path = Path(output) / "enums"
-    create_clean_directory(Path(enums_path))
+    if len(data.enum_files) > 0:
+        create_clean_directory(Path(enums_path))
 
     files = []
 
@@ -155,10 +156,12 @@ def write_data(data: ConversionResult, output: Union[str, Path]) -> None:
     write_code(Path(output) / "api_config.py", data.api_config.content)
 
     # Write the sdk.py file.
-    write_code(Path(output) / "sdk.py", data.sdk.content)
+    if data.sdk is not None:
+        write_code(Path(output) / "sdk.py", data.sdk.content)
 
     # Write the rest_client.py file.
-    write_code(Path(output) / "rest_client.py", data.rest_client.content)
+    if data.rest_client is not None:
+        write_code(Path(output) / "rest_client.py", data.rest_client.content)
 
     # Write the __init__.py file.
     write_code(
