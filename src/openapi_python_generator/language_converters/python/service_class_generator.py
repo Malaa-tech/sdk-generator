@@ -47,7 +47,7 @@ def generate_body_param(operation: Operation) -> Union[str, None]:
         return None
     else:
         if isinstance(operation.requestBody, Reference):
-            return "data.model_dump()"
+            return "data.json()"
 
         if operation.requestBody.content is None:
             return None  # pragma: no cover
@@ -61,11 +61,11 @@ def generate_body_param(operation: Operation) -> Union[str, None]:
             return None  # pragma: no cover
 
         if isinstance(media_type.media_type_schema, Reference):
-            return "data.model_dump()"
+            return "data.json()"
         elif isinstance(media_type.media_type_schema, Schema):
             schema = media_type.media_type_schema
             if schema.type == "array":
-                return "[i.model_dump() for i in data]"
+                return "[i.json() for i in data]"
             elif schema.type == "object":
                 return "data"
             else:
@@ -216,6 +216,16 @@ def generate_return_type(operation: Operation) -> OpReturnType:
     chosen_response = good_responses[0][1]
 
     if isinstance(chosen_response, Response) and chosen_response.content is not None:
+        html_content = chosen_response.content.get(
+            "text/html"
+        ) or chosen_response.content.get("application/html")
+
+        if html_content is not None:
+            return OpReturnType(
+                type=TypeConversion(original_type="html", converted_type="str"),
+                status_code=good_responses[0][0],
+                complex_type=False,
+            )
         media_type_schema = chosen_response.content.get("application/json")
     elif isinstance(chosen_response, Reference):
         media_type_schema = MediaType(

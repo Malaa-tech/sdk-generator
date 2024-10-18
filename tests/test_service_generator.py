@@ -46,11 +46,11 @@ from openapi_python_generator.models import TypeConversion
                     }
                 )
             ),
-            "data.model_dump()",
+            "data.json()",
         ),
         (
             Operation(requestBody=Reference(ref="#/components/schemas/TestModel")),
-            "data.model_dump()",
+            "data.json()",
         ),
         (
             Operation(
@@ -65,7 +65,7 @@ from openapi_python_generator.models import TypeConversion
                     }
                 )
             ),
-            "[i.model_dump() for i in data]",
+            "[i.json() for i in data]",
         ),
         (Operation(requestBody=None), None),
     ],
