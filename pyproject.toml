@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "openapi-python-generator-v2"
+name = "openapi-python-generator"
 version = "0.5.0"
 description = "Openapi Python Generator"
 authors = ["Marco Müllner <muellnermarco@gmail.com>"]
@@ -55,7 +55,7 @@ respx = "^0.20.1"
 aiohttp = "^3.8.3"
 
 [tool.poetry.scripts]
-openapi-python-generator-v2 = "openapi_python_generator.__main__:main"
+openapi-python-generator = "openapi_python_generator.__main__:main"
 
 
 
