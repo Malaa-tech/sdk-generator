@@ -143,11 +143,11 @@ def write_data(data: ConversionResult, output: Union[str, Path]) -> None:
             enums_path / f"{enum.file_name}.py",
             enum.content,
         )
-    
-    write_code(
-        enums_path / "__init__.py",
-        "\n".join([f"from .{file} import *" for file in files]),
-    )
+    if len(files) > 0:
+        write_code(
+            enums_path / "__init__.py",
+            "\n".join([f"from .{file} import *" for file in files]),
+        )
 
     # Create services.__init__.py file containing imports to all services.
     write_code(services_path / "__init__.py",  "\n".join([f"from .{service.file_name} import *" for service in data.services]),)
