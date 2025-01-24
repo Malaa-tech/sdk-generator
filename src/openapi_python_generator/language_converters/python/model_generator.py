@@ -271,13 +271,20 @@ def generate_models(components: Components) -> List[Model]:
         name = common.normalize_symbol(schema_name)
         if schema_or_reference.enum is not None:
             value_dict = schema_or_reference.model_dump()
-            regex = re.compile(r"[\s\/=\*\+]+")
+            regex = re.compile(r"[\s\/=\*\+\.]+")
             value_dict["enum"] = [
-                {"key": re.sub(regex, "_", i), "value": i}
+                {
+                    "key": re.sub(regex, "_", i), 
+                    "value": i
+                }
                 if isinstance(i, str)
-                else {"key": f"value_{i}", "value": f"value_{i}"}
+                else {
+                    "key": f"value_{i}", 
+                    "value": f"value_{i}"
+                }
                 for i in value_dict["enum"]
             ]
+
             m = Model(
                 file_name=name,
                 content=jinja_env.get_template(ENUM_TEMPLATE).render(
