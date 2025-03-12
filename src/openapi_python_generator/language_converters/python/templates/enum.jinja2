@@ -3,7 +3,7 @@ from enum import Enum
 class {{ name }}(str, Enum):
     {% for enumItem in enum %}
 
-    {% if enumItem is string %}
-    {{ enumItem.upper() }} = '{{ enumItem }}'{% else %}
-    value_{{ enumItem }} = {{ enumItem }}{% endif %}
+    {% if enumItem['value'] is string %}
+    {{ enumItem['key'].upper() }} = '{{ enumItem['value'] }}'{% else %}
+    value_{{ enumItem['key'] }} = {{ enumItem['value'] }}{% endif %}
     {% endfor %}

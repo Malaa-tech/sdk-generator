@@ -34,30 +34,44 @@ from openapi_python_generator.models import TypeConversion
 HTTP_OPERATIONS = ["get", "post", "put", "delete", "options", "head", "patch", "trace"]
 
 
+class ClassService(Service):
+    class_name: str
+
+
+def convert_to_camel_case(word: str):
+    # split underscore using split
+    temp = word.split("_")
+    # joining result
+    return temp[0].title() + "".join(ele.title() for ele in temp[1:])
+
+
 def generate_body_param(operation: Operation) -> Union[str, None]:
     if operation.requestBody is None:
         return None
     else:
         if isinstance(operation.requestBody, Reference):
-            return "data.model_dump()"
+            return "data.json()"
 
         if operation.requestBody.content is None:
             return None  # pragma: no cover
 
-        if operation.requestBody.content.get("application/json") is None:
-            return None  # pragma: no cover
-
-        media_type = operation.requestBody.content.get("application/json")
+        media_type = operation.requestBody.content.get(
+            "application/json"
+        ) or operation.requestBody.content.get("application/x-www-form-urlencoded")
 
         if media_type is None:
             return None  # pragma: no cover
 
+        if operation.requestBody.content.get(
+            "application/x-www-form-urlencoded"
+        ) and isinstance(media_type.media_type_schema, Reference):
+            return "data.dict()"
         if isinstance(media_type.media_type_schema, Reference):
-            return "data.model_dump()"
+            return "data.json()"
         elif isinstance(media_type.media_type_schema, Schema):
             schema = media_type.media_type_schema
             if schema.type == "array":
-                return "[i.model_dump() for i in data]"
+                return "[i.json() for i in data]"
             elif schema.type == "object":
                 return "data"
             else:
@@ -116,6 +130,7 @@ def generate_params(operation: Operation) -> str:
         "application/json",
         "text/plain",
         "multipart/form-data",
+        "application/x-www-form-urlencoded",
     ]
 
     if operation.requestBody is not None:
@@ -173,6 +188,7 @@ def generate_operation_id(
 def _generate_params(
     operation: Operation, param_in: Literal["query", "header"] = "query"
 ):
+    print("Operation: ", operation.parameters)
     if operation.parameters is None:
         return []
 
@@ -208,6 +224,16 @@ def generate_return_type(operation: Operation) -> OpReturnType:
     chosen_response = good_responses[0][1]
 
     if isinstance(chosen_response, Response) and chosen_response.content is not None:
+        html_content = chosen_response.content.get(
+            "text/html"
+        ) or chosen_response.content.get("application/html")
+
+        if html_content is not None:
+            return OpReturnType(
+                type=TypeConversion(original_type="html", converted_type="str"),
+                status_code=good_responses[0][0],
+                complex_type=False,
+            )
         media_type_schema = chosen_response.content.get("application/json")
     elif isinstance(chosen_response, Reference):
         media_type_schema = MediaType(
@@ -254,6 +280,13 @@ def generate_return_type(operation: Operation) -> OpReturnType:
         else:
             raise Exception("Unknown media type schema type")  # pragma: no cover
     elif media_type_schema is None:
+        media_type_pdf = chosen_response.content.get("application/pdf")
+        if media_type_pdf is not None:
+            return OpReturnType(
+                type=TypeConversion(original_type="pdf", converted_type="bytes"),
+                status_code=good_responses[0][0],
+                complex_type=False,
+            )
         return OpReturnType(
             type=None,
             status_code=good_responses[0][0],
@@ -263,9 +296,9 @@ def generate_return_type(operation: Operation) -> OpReturnType:
         raise Exception("Unknown media type schema type")  # pragma: no cover
 
 
-def generate_services(
+def generate_class_services(
     paths: Dict[str, PathItem], library_config: LibraryConfig
-) -> List[Service]:
+) -> List[ClassService]:
     """
     Generates services from a paths object.
     :param paths: paths object to be converted
@@ -283,8 +316,19 @@ def generate_services(
         return_type = generate_return_type(op)
         body_param = generate_body_param(op)
 
+        print("Operation ID: ", operation_id)
+        request = hasattr(op, "requestBody")
+        request_type = "application/json"
+        if request and op.requestBody is not None:
+            is_urlencoded = op.requestBody.content.get(
+                "application/x-www-form-urlencoded"
+            )
+            if is_urlencoded is not None:
+                request_type = "application/x-www-form-urlencoded"
+
         so = ServiceOperation(
             params=params,
+            request_type=request_type,
             operation_id=operation_id,
             query_params=query_params,
             header_params=header_params,
@@ -332,9 +376,11 @@ def generate_services(
     tags = set([so.tag for so in service_ops])
 
     for tag in tags:
+        file_name = f"{common.camel_case_split(tag)}_service".replace(" ", "_").lower()
         services.append(
-            Service(
-                file_name=f"{tag}_service",
+            ClassService(
+                file_name=file_name,
+                class_name=convert_to_camel_case(file_name),
                 operations=[
                     so for so in service_ops if so.tag == tag and not so.async_client
                 ],
@@ -352,9 +398,13 @@ def generate_services(
         )
 
     for tag in tags:
+        file_name = f"async_{common.camel_case_split(tag)}_service".replace(
+            " ", "_"
+        ).lower()
         services.append(
-            Service(
-                file_name=f"async_{tag}_service",
+            ClassService(
+                file_name=file_name,
+                class_name=convert_to_camel_case(file_name),
                 operations=[
                     so for so in service_ops if so.tag == tag and so.async_client
                 ],
