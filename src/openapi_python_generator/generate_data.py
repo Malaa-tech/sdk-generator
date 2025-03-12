@@ -27,6 +27,7 @@ def create_clean_directory(path: Path):
         shutil.rmtree(path)  # Remove the existing directory and its contents
     path.mkdir(parents=True, exist_ok=True)  # Recreate the directory
 
+
 def write_code(path: Path, content) -> None:
     """
     Write the content to the file at the given path.
@@ -134,7 +135,7 @@ def write_data(data: ConversionResult, output: Union[str, Path]) -> None:
             services_path / f"{service.file_name}.py",
             jinja_env.get_template(SERVICE_TEMPLATE).render(**service.model_dump()),
         )
-    
+
     files = []
 
     for enum in data.enum_files:
@@ -150,8 +151,11 @@ def write_data(data: ConversionResult, output: Union[str, Path]) -> None:
         )
 
     # Create services.__init__.py file containing imports to all services.
-    write_code(services_path / "__init__.py",  "\n".join([f"from .{service.file_name} import *" for service in data.services]),)
- 
+    write_code(
+        services_path / "__init__.py",
+        "\n".join([f"from .{service.file_name} import *" for service in data.services]),
+    )
+
     # Write the api_config.py file.
     write_code(Path(output) / "api_config.py", data.api_config.content)
 

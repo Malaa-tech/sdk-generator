@@ -34,6 +34,7 @@ class ServiceOperation(BaseModel):
     query_params: List[str]
     header_params: List[str]
     return_type: OpReturnType
+    request_type: Optional[str] = None
     operation: Operation
     pathItem: PathItem
     content: str
@@ -68,11 +69,13 @@ class Service(BaseModel):
     library_import: str
     use_orjson: bool = False
     class_name: Optional[str] = None
-  
+
+
 class APIConfig(BaseModel):
     file_name: str
     base_url: str
     content: str
+
 
 class RestClient(BaseModel):
     file_name: str
@@ -80,16 +83,19 @@ class RestClient(BaseModel):
     library_import: str
     async_client: Optional[bool] = False
 
+
 class ServiceSDK(BaseModel):
     file_name: str
     content: str
     classes: List[Any] = []
-    enum_classes : List[Any] = []
+    enum_classes: List[Any] = []
+
 
 class EnumFiles(BaseModel):
     file_name: str
     content: str
     classes: List[str] = []
+
 
 class ConversionResult(BaseModel):
     models: List[Model]
@@ -98,4 +104,3 @@ class ConversionResult(BaseModel):
     sdk: Optional[ServiceSDK] = None
     rest_client: Optional[RestClient] = None
     enum_files: List[EnumFiles] = []
-
